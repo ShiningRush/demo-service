@@ -45,26 +45,28 @@ func TestAccountService_NewAccount(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		isCalled := false
-		mockRepo := &account.MockRepo{}
-		// 对 GetWithPhone 进行打桩
-		mockRepo.On("GetWithPhone", mock.Anything).Run(func(args mock.Arguments) {
-			// 当桩函数被调用时，我们做一个标记
-			isCalled = true
-		}).Return(tc.giveAcc, tc.giveErr)
+		t.Run(tc.caseDesc, func(t *testing.T) {
+			isCalled := false
+			mockRepo := &account.MockRepo{}
+			// 对 GetWithPhone 进行打桩
+			mockRepo.On("GetWithPhone", mock.Anything).Run(func(args mock.Arguments) {
+				// 当桩函数被调用时，我们做一个标记
+				isCalled = true
+			}).Return(tc.giveAcc, tc.giveErr)
 
-		svc := accountService{
-			accRepo: mockRepo,
-		}
-		acc, err := svc.NewAccount(tc.givePhone)
+			svc := accountService{
+				accRepo: mockRepo,
+			}
+			acc, err := svc.NewAccount(tc.givePhone)
 
-		// 检查期望的结果
-		assert.Equal(t, tc.wantErr, err, tc.caseDesc)
-		if err != nil {
-			continue
-		}
-		assert.Equal(t, tc.wantAcc, acc, tc.caseDesc)
-		assert.Equal(t, tc.wantRepoCall, isCalled, tc.caseDesc)
+			// 检查期望的结果
+			assert.Equal(t, tc.wantErr, err)
+			if err != nil {
+				return
+			}
+			assert.Equal(t, tc.wantAcc, acc)
+			assert.Equal(t, tc.wantRepoCall, isCalled)
+		})
 	}
 }
 
@@ -138,45 +140,47 @@ func TestAccountService_ChangePhone(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		isUpdateCalled, isGetCalled, isGetWithPhoneCalled := false, false, false
-		mockRepo := &account.MockRepo{}
-		// 对 Get 进行打桩
-		mockRepo.On("Get", mock.Anything).Run(func(args mock.Arguments) {
-			// 当桩函数被调用时，我们做一个标记
-			isGetCalled = true
-			// 确保输入的账户为用例中的账户ID
-			assert.Equal(t, tc.giveAccId, args.Int(0), tc.caseDesc)
-		}).Return(tc.giveTargetAcc, tc.giveGetErr)
+		t.Run(tc.caseDesc, func(t *testing.T) {
+			isUpdateCalled, isGetCalled, isGetWithPhoneCalled := false, false, false
+			mockRepo := &account.MockRepo{}
+			// 对 Get 进行打桩
+			mockRepo.On("Get", mock.Anything).Run(func(args mock.Arguments) {
+				// 当桩函数被调用时，我们做一个标记
+				isGetCalled = true
+				// 确保输入的账户为用例中的账户ID
+				assert.Equal(t, tc.giveAccId, args.Int(0))
+			}).Return(tc.giveTargetAcc, tc.giveGetErr)
 
-		// 对 GetWithPhone 进行打桩
-		mockRepo.On("GetWithPhone", mock.Anything).Run(func(args mock.Arguments) {
-			// 当桩函数被调用时，我们做一个标记
-			isGetWithPhoneCalled = true
-		}).Return(tc.giveAcc, tc.giveGetWithPhoneErr)
+			// 对 GetWithPhone 进行打桩
+			mockRepo.On("GetWithPhone", mock.Anything).Run(func(args mock.Arguments) {
+				// 当桩函数被调用时，我们做一个标记
+				isGetWithPhoneCalled = true
+			}).Return(tc.giveAcc, tc.giveGetWithPhoneErr)
 
-		// 对 Update 进行打桩
-		mockRepo.On("Update", mock.Anything).Run(func(args mock.Arguments) {
-			// 当桩函数被调用时，我们做一个标记
-			isUpdateCalled = true
-			// 确保输入的账户为用例中的账户ID
-			acc := args.Get(0).(entity.Account)
-			assert.Equal(t, tc.giveTargetAcc.ID, acc.ID, tc.caseDesc)
-			assert.Equal(t, tc.givePhone, acc.Phone, tc.caseDesc)
-		}).Return(tc.giveAcc, tc.giveGetErr)
+			// 对 Update 进行打桩
+			mockRepo.On("Update", mock.Anything).Run(func(args mock.Arguments) {
+				// 当桩函数被调用时，我们做一个标记
+				isUpdateCalled = true
+				// 确保输入的账户为用例中的账户ID
+				acc := args.Get(0).(entity.Account)
+				assert.Equal(t, tc.giveTargetAcc.ID, acc.ID)
+				assert.Equal(t, tc.givePhone, acc.Phone)
+			}).Return(tc.giveAcc, tc.giveGetErr)
 
-		svc := accountService{
-			accRepo: mockRepo,
-		}
-		err := svc.ChangePhone(tc.giveAccId, tc.givePhone)
+			svc := accountService{
+				accRepo: mockRepo,
+			}
+			err := svc.ChangePhone(tc.giveAccId, tc.givePhone)
 
-		// 检查期望的结果
-		assert.Equal(t, tc.wantErr, err, tc.caseDesc)
-		if err != nil {
-			continue
-		}
-		assert.Equal(t, tc.wantGetCall, isGetCalled, tc.caseDesc)
-		assert.Equal(t, tc.wantGetWithPhoneCall, isGetWithPhoneCalled, tc.caseDesc)
-		assert.Equal(t, tc.wantUpdateCall, isUpdateCalled, tc.caseDesc)
+			// 检查期望的结果
+			assert.Equal(t, tc.wantErr, err)
+			if err != nil {
+				return
+			}
+			assert.Equal(t, tc.wantGetCall, isGetCalled)
+			assert.Equal(t, tc.wantGetWithPhoneCall, isGetWithPhoneCalled)
+			assert.Equal(t, tc.wantUpdateCall, isUpdateCalled)
+		})
 	}
 }
 
